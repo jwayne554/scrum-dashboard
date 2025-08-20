@@ -66,32 +66,54 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// Root endpoint
-app.get('/', (_req, res) => {
-  res.json({ 
-    message: 'Scrum Dashboard API',
-    status: 'running',
-    endpoints: [
-      '/api/health - Health check with DB',
-      '/api/teams - List teams',
-      '/api/refresh?teamId=xxx - Refresh team data',
-      '/api/cycles?teamId=xxx - Get team cycles'
-    ]
-  });
-});
-
 app.use('/api', createApiRouter(prisma, linearService));
 
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {
-  const clientPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(clientPath));
+  // When using tsx, we need to go from src to root
+  const clientPath = path.resolve(process.cwd(), '../client/dist');
+  logger.info(`Serving static files from: ${clientPath}`);
   
-  // Handle React routing, return index.html for all non-API routes
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(clientPath, 'index.html'));
-    }
+  // Check if client build exists
+  const fs = require('fs');
+  if (fs.existsSync(clientPath)) {
+    logger.info('Client build found, serving static files');
+    app.use(express.static(clientPath));
+    
+    // Handle all non-API routes - serve React app
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+        const indexPath = path.join(clientPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).json({ error: 'Frontend not built' });
+        }
+      }
+    });
+  } else {
+    logger.warn('Client build not found at', clientPath);
+    app.get('/', (_req, res) => {
+      res.json({ 
+        message: 'API is running but frontend is not built',
+        hint: 'The React app needs to be built',
+        status: 'api-only'
+      });
+    });
+  }
+} else {
+  // Development mode - just show API info
+  app.get('/', (_req, res) => {
+    res.json({ 
+      message: 'Scrum Dashboard API (dev mode)',
+      status: 'running',
+      endpoints: [
+        '/api/health - Health check with DB',
+        '/api/teams - List teams',
+        '/api/refresh?teamId=xxx - Refresh team data',
+        '/api/cycles?teamId=xxx - Get team cycles'
+      ]
+    });
   });
 }
 
