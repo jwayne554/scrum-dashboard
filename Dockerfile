@@ -8,9 +8,12 @@ COPY package*.json ./
 COPY server/package*.json ./server/
 COPY client/package*.json ./client/
 
+# Copy Prisma schema before installing dependencies
+COPY server/prisma ./server/prisma
+
 # Install dependencies
 RUN npm ci --only=production
-RUN cd server && npm ci --only=production
+RUN cd server && npm ci --omit=dev
 RUN cd client && npm ci --only=production
 
 # Copy source code

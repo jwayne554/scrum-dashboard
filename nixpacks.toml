@@ -1,0 +1,20 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "npm install",
+    "cd server && npm install",
+    "cd client && npm install"
+]
+
+[phases.build]
+cmds = [
+    "cd server && npx prisma generate",
+    "cd client && npm run build",
+    "cd server && npm run build",
+    "cd server && npx prisma migrate deploy"
+]
+
+[start]
+cmd = "cd server && node dist/index.js"
