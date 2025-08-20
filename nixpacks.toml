@@ -15,4 +15,4 @@ cmds = [
 ]
 
 [start]
-cmd = "cd server && NODE_ENV=production npx tsx src/index.ts"
+cmd = "cd server && NODE_ENV=production node init-db.js"
