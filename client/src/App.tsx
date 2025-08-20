@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, BarChart, Bar, Legend 
+  AreaChart, Area, Legend 
 } from 'recharts';
 import { 
   RefreshCw, Gauge, Activity, AlertTriangle, Calendar, CalendarDays,
-  Bug, Timer, Users, TrendingUp, Moon, Sun, ChevronDown, ChevronUp, Shield 
+  Bug, Timer, TrendingUp, Moon, Sun, ChevronDown, ChevronUp, Shield 
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './components/Card';
 import { Badge } from './components/Badge';
 import { Progress } from './components/Progress';
-import { KPI } from './components/KPI';
 import { Tooltip as InfoTooltip } from './components/Tooltip';
 import { MultiSelect } from './components/MultiSelect';
 import { WaitingItemsList } from './components/WaitingItemsList';
@@ -448,7 +447,6 @@ export default function App() {
                             const today = new Date();
                             const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
                             const daysElapsed = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                            const progress = Math.min(100, Math.max(0, (daysElapsed / totalDays) * 100));
                             return `Day ${Math.min(daysElapsed, totalDays)} of ${totalDays}`;
                           })()}
                         </span>
@@ -462,8 +460,7 @@ export default function App() {
                             const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
                             const daysElapsed = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
                             return Math.min(100, Math.max(0, (daysElapsed / totalDays) * 100));
-                          })()} 
-                          className="h-1" 
+                          })()}
                         />
                       </div>
                     </div>

@@ -71,33 +71,66 @@ app.use('/api', createApiRouter(prisma, linearService));
 
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {
-  // When using tsx, we need to go from src to root
-  const clientPath = path.resolve(process.cwd(), '../client/dist');
-  logger.info(`Serving static files from: ${clientPath}`);
+  // Try multiple possible paths for the client build
+  const possiblePaths = [
+    path.resolve(process.cwd(), '../client/dist'),  // From server directory
+    path.resolve(process.cwd(), 'client/dist'),      // From root directory
+    path.resolve(__dirname, '../../client/dist'),    // Relative to this file
+    '/app/client/dist'                               // Absolute path in Railway
+  ];
   
-  // Check if client build exists
-  if (fs.existsSync(clientPath)) {
-    logger.info('Client build found, serving static files');
+  let clientPath: string | null = null;
+  for (const testPath of possiblePaths) {
+    logger.info(`Checking for client build at: ${testPath}`);
+    if (fs.existsSync(testPath)) {
+      clientPath = testPath;
+      logger.info(`Found client build at: ${clientPath}`);
+      break;
+    }
+  }
+  
+  if (clientPath) {
+    logger.info('Serving static files from:', clientPath);
     app.use(express.static(clientPath));
     
     // Handle all non-API routes - serve React app
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
-        const indexPath = path.join(clientPath, 'index.html');
+        const indexPath = path.join(clientPath!, 'index.html');
         if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
         } else {
-          res.status(404).json({ error: 'Frontend not built' });
+          logger.error('index.html not found at:', indexPath);
+          res.status(404).json({ error: 'Frontend index.html not found' });
         }
       }
     });
   } else {
-    logger.warn('Client build not found at', clientPath);
+    logger.error('Client build not found in any of the expected locations');
+    logger.error('Current working directory:', process.cwd());
+    logger.error('__dirname:', __dirname);
+    logger.error('Checked paths:', possiblePaths);
+    
+    // List directory contents for debugging
+    try {
+      const parentDir = path.resolve(process.cwd(), '..');
+      logger.info('Parent directory contents:', fs.readdirSync(parentDir));
+      const currentDir = process.cwd();
+      logger.info('Current directory contents:', fs.readdirSync(currentDir));
+    } catch (e) {
+      logger.error('Could not list directory contents:', e);
+    }
+    
     app.get('/', (_req, res) => {
       res.json({ 
         message: 'API is running but frontend is not built',
         hint: 'The React app needs to be built',
-        status: 'api-only'
+        status: 'api-only',
+        debug: {
+          cwd: process.cwd(),
+          dirname: __dirname,
+          checkedPaths: possiblePaths
+        }
       });
     });
   }
