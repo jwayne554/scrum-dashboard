@@ -472,8 +472,13 @@ export default function App() {
                         ⚠️ High carry-over risk: ~{metrics.carryOver}% likely won't complete
                       </div>
                     )}
-                    <div className="text-amber-600 dark:text-amber-400">
-                      Note: Linear counts "Ready for Release" as completed
+                    <div className="text-neutral-600 dark:text-neutral-400 space-y-1">
+                      <div>📊 R&D Team Workflow Tracking:</div>
+                      <div className="ml-4 text-[11px]">
+                        • In Progress: Development, Review, Testing, Ready states
+                        • Blocked items tracked separately
+                        • Linear counts "Ready for Release" as completed
+                      </div>
                     </div>
                   </div>
                 </CardContent>
