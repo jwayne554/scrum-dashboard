@@ -2,10 +2,21 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Set default DATABASE_URL if not provided
+// Set defaults if not provided
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'file:./prisma/dev.db';
   console.log('Using default DATABASE_URL:', process.env.DATABASE_URL);
+}
+
+if (!process.env.DATABASE_PROVIDER) {
+  // Auto-detect provider from URL
+  if (process.env.DATABASE_URL.startsWith('postgresql://') || 
+      process.env.DATABASE_URL.startsWith('postgres://')) {
+    process.env.DATABASE_PROVIDER = 'postgresql';
+  } else {
+    process.env.DATABASE_PROVIDER = 'sqlite';
+  }
+  console.log('Auto-detected DATABASE_PROVIDER:', process.env.DATABASE_PROVIDER);
 }
 
 // Ensure the database directory exists
