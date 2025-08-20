@@ -12,9 +12,10 @@ cmds = [
 cmds = [
     "cd server && npx prisma generate",
     "cd client && npm run build",
-    "ls -la client/dist",
-    "echo 'Client build completed successfully'"
+    "cp -r client/dist server/client-dist",
+    "ls -la server/client-dist",
+    "echo 'Client build copied to server directory'"
 ]
 
 [start]
-cmd = "cd server && NODE_ENV=production node init-db.js"
+cmd = "bash railway-start.sh"

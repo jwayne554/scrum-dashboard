@@ -11,7 +11,12 @@
       "Bash(npx prisma migrate:*)",
       "Bash(sqlite3:*)",
       "Bash(chmod:*)",
-      "Bash(PORT=3002 NODE_ENV=production npx tsx src/index.ts)"
+      "Bash(PORT=3002 NODE_ENV=production npx tsx src/index.ts)",
+      "Bash(NODE_ENV=production PORT=3002 node start-production.js)",
+      "Bash(mv:*)",
+      "Bash(NODE_ENV=production PORT=3002 node start-production.cjs)",
+      "Bash(DATABASE_URL=\"file:./dev.db\" NODE_ENV=production PORT=3002 node start-production.cjs)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

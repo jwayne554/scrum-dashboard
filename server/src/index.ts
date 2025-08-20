@@ -73,9 +73,12 @@ app.use('/api', createApiRouter(prisma, linearService));
 if (process.env.NODE_ENV === 'production') {
   // Try multiple possible paths for the client build
   const possiblePaths = [
+    path.resolve(process.cwd(), 'client-dist'),      // Copied to server directory
     path.resolve(process.cwd(), '../client/dist'),  // From server directory
     path.resolve(process.cwd(), 'client/dist'),      // From root directory
+    path.resolve(__dirname, '../client-dist'),       // Relative to src
     path.resolve(__dirname, '../../client/dist'),    // Relative to this file
+    '/app/server/client-dist',                       // Absolute path in Railway server
     '/app/client/dist'                               // Absolute path in Railway
   ];
   
