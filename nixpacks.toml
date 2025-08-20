@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs-18_x", "npm-9_x"]
+nixPkgs = ["nodejs-18_x", "npm-9_x", "sqlite"]
 
 [phases.install]
 cmds = [
@@ -10,9 +10,9 @@ cmds = [
 
 [phases.build]
 cmds = [
-    "cd server && npx prisma generate",
+    "cd server && node prisma-init.js",
     "cd client && npm run build"
 ]
 
 [start]
-cmd = "cd server && node start-prod.js"
+cmd = "cd server && NODE_ENV=production npx tsx src/index.ts"
