@@ -1,12 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { LinearService } from './lib/linear-client.js';
 import { createApiRouter } from './routes/api.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const logger = pino({
   transport: {
@@ -41,6 +46,19 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api', createApiRouter(prisma, linearService));
+
+// Serve static files from React app in production
+if (process.env.NODE_ENV === 'production') {
+  const clientPath = path.join(__dirname, '../../client/dist');
+  app.use(express.static(clientPath));
+  
+  // Handle React routing, return index.html for all non-API routes
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(clientPath, 'index.html'));
+    }
+  });
+}
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error({ error: err }, 'Unhandled error');
