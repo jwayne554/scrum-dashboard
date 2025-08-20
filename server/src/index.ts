@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { LinearService } from './lib/linear-client.js';
@@ -75,7 +76,6 @@ if (process.env.NODE_ENV === 'production') {
   logger.info(`Serving static files from: ${clientPath}`);
   
   // Check if client build exists
-  const fs = require('fs');
   if (fs.existsSync(clientPath)) {
     logger.info('Client build found, serving static files');
     app.use(express.static(clientPath));
