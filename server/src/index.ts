@@ -23,7 +23,10 @@ const logger = pino({
 });
 
 const app = express();
+// Railway provides PORT, we must use it
 const PORT = process.env.PORT || 3001;
+logger.info(`PORT environment variable: ${process.env.PORT}`);
+logger.info(`Will listen on port: ${PORT}`);
 
 // Initialize Prisma with better error handling
 let prisma: PrismaClient;
@@ -53,8 +56,28 @@ app.use((req, _res, next) => {
   next();
 });
 
+// Health check that doesn't require database
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    env: process.env.NODE_ENV
+  });
+});
+
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.json({ 
+    message: 'Scrum Dashboard API',
+    status: 'running',
+    endpoints: [
+      '/api/health - Health check with DB',
+      '/api/teams - List teams',
+      '/api/refresh?teamId=xxx - Refresh team data',
+      '/api/cycles?teamId=xxx - Get team cycles'
+    ]
+  });
 });
 
 app.use('/api', createApiRouter(prisma, linearService));
