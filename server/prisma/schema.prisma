@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  email     String?  @unique
+  name      String
+  avatarUrl String?
+  teamId    String?
+  
+  team            Team?    @relation(fields: [teamId], references: [id])
+  assignedIssues  Issue[]  @relation("AssignedIssues")
+  createdIssues   Issue[]  @relation("CreatedIssues")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id     String  @id
+  key    String  @unique
+  name   String
+  cycles Cycle[]
+  issues Issue[]
+  users  User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cycle {
+  id          String    @id
+  teamId      String
+  number      Int
+  name        String?
+  startsAt    DateTime
+  endsAt      DateTime
+  completedAt DateTime?
+  progress    Float     @default(0)
+  initialScope Float?
+  finalScope   Float?
+  
+  team        Team      @relation(fields: [teamId], references: [id])
+  histories   CycleHistory[]
+  issues      Issue[]
+  snapshots   Snapshot[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([teamId, number])
+}
+
+model CycleHistory {
+  id                      Int      @id @default(autoincrement())
+  cycleId                 String
+  dayIndex                Int
+  date                    DateTime
+  issueCount              Int
+  completedIssueCount     Int
+  scope                   Float
+  completedScope          Float
+  inProgressScope         Float
+  
+  cycle                   Cycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  createdAt               DateTime @default(now())
+
+  @@unique([cycleId, dayIndex])
+}
+
+model Issue {
+  id          String    @id
+  teamId      String
+  identifier  String    @unique
+  title       String
+  estimate    Float?
+  priority    Int?
+  stateId     String?
+  stateType   String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  canceledAt  DateTime?
+  createdAt   DateTime
+  updatedAt   DateTime
+  cycleId     String?
+  relations   String?
+  assigneeId  String?
+  creatorId   String?
+  history     String?   // JSON string of state transitions
+
+  team        Team      @relation(fields: [teamId], references: [id])
+  cycle       Cycle?    @relation(fields: [cycleId], references: [id])
+  assignee    User?     @relation("AssignedIssues", fields: [assigneeId], references: [id])
+  creator     User?     @relation("CreatedIssues", fields: [creatorId], references: [id])
+  labels      IssueLabel[]
+
+  @@index([teamId, cycleId])
+  @@index([stateType])
+  @@index([completedAt])
+  @@index([assigneeId])
+}
+
+model IssueLabel {
+  id      Int    @id @default(autoincrement())
+  issueId String
+  label   String
+
+  issue   Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, label])
+  @@index([label])
+}
+
+model Snapshot {
+  id        Int      @id @default(autoincrement())
+  cycleId   String
+  json      String
+  
+  cycle     Cycle    @relation(fields: [cycleId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([cycleId])
+}

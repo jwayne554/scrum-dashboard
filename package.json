@@ -1,0 +1,25 @@
+{
+  "name": "scrum-dashboard",
+  "version": "1.0.0",
+  "description": "Scrum Dashboard with Linear Integration",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "start:prod": "cd server && npm run start:prod",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "prisma:generate": "cd server && npx prisma generate",
+    "prisma:migrate": "cd server && npx prisma migrate dev",
+    "prisma:migrate:prod": "cd server && npx prisma migrate deploy",
+    "prisma:studio": "cd server && npx prisma studio",
+    "docker:build": "docker build -t scrum-dashboard .",
+    "docker:run": "docker run -p 3001:3001 --env-file .env.production -v $(pwd)/data:/app/data scrum-dashboard"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

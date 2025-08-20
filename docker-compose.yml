@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - LINEAR_API_KEY=${LINEAR_API_KEY}
+      - DATABASE_URL=file:/app/data/prod.db
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - dashboard-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  dashboard-data:
+    driver: local

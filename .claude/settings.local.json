@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm view:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(sqlite3:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": []
+  }
+}

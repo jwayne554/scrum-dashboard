@@ -1,0 +1,4 @@
+LINEAR_API_KEY=lin_api_********************************
+TEAM_ID=your-team-id-here
+DATABASE_URL=file:./dev.db
+PORT=3001
