@@ -38,7 +38,7 @@ export class LinearService {
       }
     `;
 
-    const result = await this.client.client.rawRequest(query, { teamId });
+    const result: any = await this.client.client.rawRequest(query, { teamId });
     return result.data.team;
   }
 
@@ -97,7 +97,7 @@ export class LinearService {
         }
       `;
 
-      const result = await this.client.client.rawRequest(query, {
+      const result: any = await this.client.client.rawRequest(query, {
         teamId,
         after: cursor
       });
@@ -140,7 +140,7 @@ export class LinearService {
       }
     `;
 
-    const result = await this.client.client.rawRequest(query, { teamId });
+    const result: any = await this.client.client.rawRequest(query, { teamId });
     return result.data.team;
   }
 
@@ -211,7 +211,7 @@ export class LinearService {
       }
     `;
 
-    const result = await this.client.client.rawRequest(query);
+    const result: any = await this.client.client.rawRequest(query);
     return result.data.teams.nodes;
   }
 
@@ -226,7 +226,7 @@ export class LinearService {
       }
     `;
 
-    const result = await this.client.client.rawRequest(query);
+    const result: any = await this.client.client.rawRequest(query);
     return result.data.organization;
   }
 
@@ -248,7 +248,7 @@ export class LinearService {
       }
     `;
 
-    const result = await this.client.client.rawRequest(query, { teamId });
+    const result: any = await this.client.client.rawRequest(query, { teamId });
     return result.data.team.members.nodes.filter((member: any) => member.active);
   }
 }

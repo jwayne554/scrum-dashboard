@@ -31,18 +31,18 @@ const linearService = new LinearService(process.env.LINEAR_API_KEY, prisma);
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info({ method: req.method, url: req.url }, 'Request received');
   next();
 });
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.use('/api', createApiRouter(prisma, linearService));
 
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error({ error: err }, 'Unhandled error');
   res.status(500).json({ error: 'Internal server error' });
 });

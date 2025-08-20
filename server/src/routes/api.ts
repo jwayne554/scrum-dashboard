@@ -112,7 +112,7 @@ export function createApiRouter(prisma: PrismaClient, linearService: LinearServi
 
       await prisma.cycleHistory.createMany({ data: histories });
 
-      const issues = await linearService.fetchCycleIssues(teamId, activeCycle.id);
+      const issues: any[] = await linearService.fetchCycleIssues(teamId, activeCycle.id);
       
       // Log state distribution for debugging
       const stateDistribution = new Map<string, number>();

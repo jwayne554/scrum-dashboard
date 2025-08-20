@@ -11,10 +11,8 @@ cmds = [
 [phases.build]
 cmds = [
     "cd server && npx prisma generate",
-    "cd client && npm run build",
-    "cd server && npm run build",
-    "cd server && npx prisma migrate deploy"
+    "cd client && npm run build"
 ]
 
 [start]
-cmd = "cd server && node dist/index.js"
+cmd = "cd server && node start-prod.js"
