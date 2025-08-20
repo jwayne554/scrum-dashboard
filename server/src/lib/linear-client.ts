@@ -212,7 +212,28 @@ export class LinearService {
     `;
 
     const result: any = await this.client.client.rawRequest(query);
-    return result.data.teams.nodes;
+    const allTeams = result.data.teams.nodes;
+    
+    // Filter to only show R&D/Engineering teams
+    const rdTeams = allTeams.filter((team: any) => {
+      const nameLower = team.name.toLowerCase();
+      const keyLower = team.key.toLowerCase();
+      
+      // Match R&D, Engineering, Development, or similar teams
+      return nameLower.includes('r&d') || 
+             nameLower.includes('r & d') || 
+             nameLower.includes('engineering') || 
+             nameLower.includes('development') || 
+             nameLower.includes('dev team') ||
+             nameLower.includes('product engineering') ||
+             keyLower.includes('eng') ||
+             keyLower.includes('dev') ||
+             keyLower === 'rd' ||
+             keyLower === 'r&d';
+    });
+    
+    // If no R&D teams found, return all teams as fallback
+    return rdTeams.length > 0 ? rdTeams : allTeams;
   }
 
   async fetchOrganization() {

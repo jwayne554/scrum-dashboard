@@ -16,7 +16,8 @@
       "Bash(mv:*)",
       "Bash(NODE_ENV=production PORT=3002 node start-production.cjs)",
       "Bash(DATABASE_URL=\"file:./dev.db\" NODE_ENV=production PORT=3002 node start-production.cjs)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

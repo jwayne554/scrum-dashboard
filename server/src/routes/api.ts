@@ -122,26 +122,30 @@ export function createApiRouter(prisma: PrismaClient, linearService: LinearServi
         const stateName = issue.state?.name?.toLowerCase() || '';
         const stateType = issue.state?.type || 'unstarted';
         
-        // Map Linear state names to our CFD categories
-        // Check exact state name patterns more carefully
+        // Map Linear state names to our CFD categories - R&D specific workflow
+        // R&D team uses specific status names that need accurate mapping
         let mappedStateType = stateType;
+        const lowerStateName = stateName.toLowerCase();
         
-        // Only override if we have specific state name patterns
-        if (stateName === 'in review' || stateName.includes('code review') || stateName.includes('pr review')) {
-          mappedStateType = 'review';
-        } else if (stateName === 'in testing' || stateName.includes('qa') || stateName === 'testing') {
-          mappedStateType = 'testing';
-        } else if (stateName.includes('ready for release') || stateName.includes('ready to deploy') || stateName === 'ready') {
-          mappedStateType = 'ready';
-        } else if (stateName === 'in progress' || stateType === 'started') {
-          // Explicitly keep "In Progress" as started
-          mappedStateType = 'started';
-        } else if (stateName === 'todo' || stateType === 'unstarted') {
+        // R&D Workflow status mapping
+        if (lowerStateName === 'backlog' || lowerStateName === 'icebox') {
+          mappedStateType = 'backlog';
+        } else if (lowerStateName === 'todo' || lowerStateName === 'to do' || lowerStateName === 'planned' || stateType === 'unstarted') {
           mappedStateType = 'unstarted';
-        } else if (stateName === 'done' || stateType === 'completed') {
+        } else if (lowerStateName === 'in progress' || lowerStateName === 'in development' || lowerStateName === 'developing' || lowerStateName === 'coding') {
+          mappedStateType = 'started';
+        } else if (lowerStateName === 'in review' || lowerStateName.includes('code review') || lowerStateName.includes('pr review') || lowerStateName === 'reviewing') {
+          mappedStateType = 'review';
+        } else if (lowerStateName === 'in testing' || lowerStateName.includes('qa') || lowerStateName === 'testing' || lowerStateName === 'in qa') {
+          mappedStateType = 'testing';
+        } else if (lowerStateName.includes('ready for release') || lowerStateName.includes('ready to deploy') || lowerStateName === 'ready' || lowerStateName === 'approved' || lowerStateName === 'staging') {
+          mappedStateType = 'ready';
+        } else if (lowerStateName === 'done' || lowerStateName === 'released' || lowerStateName === 'deployed' || lowerStateName === 'complete' || stateType === 'completed') {
           mappedStateType = 'completed';
-        } else if (stateName === 'canceled' || stateType === 'canceled') {
+        } else if (lowerStateName === 'canceled' || lowerStateName === 'cancelled' || lowerStateName === 'won\'t do' || stateType === 'canceled') {
           mappedStateType = 'canceled';
+        } else if (lowerStateName === 'blocked' || lowerStateName === 'on hold') {
+          mappedStateType = 'blocked';
         }
         
         // Track state distribution (use 0 for unestimated)

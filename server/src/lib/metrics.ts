@@ -31,7 +31,10 @@ export class MetricsCalculator {
       .filter(issue => issue.completedAt)
       .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
     const inProgressScope = cycle.issues
-      .filter(issue => !issue.completedAt && !issue.canceledAt && (issue.stateType === 'started' || issue.stateType === 'review' || issue.stateType === 'testing' || issue.stateType === 'ready'))
+      .filter(issue => !issue.completedAt && !issue.canceledAt && 
+        (issue.stateType === 'started' || issue.stateType === 'review' || 
+         issue.stateType === 'testing' || issue.stateType === 'ready' || 
+         issue.stateType === 'blocked'))
       .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
     
     const effectiveHistory = {
@@ -132,7 +135,10 @@ export class MetricsCalculator {
         .filter((issue: any) => issue.completedAt)
         .reduce((sum: number, issue: any) => sum + (issue.estimate || 0), 0);
       const inProgressScope = cycle.issues
-        .filter((issue: any) => !issue.completedAt && !issue.canceledAt && (issue.stateType === 'started' || issue.stateType === 'review' || issue.stateType === 'testing' || issue.stateType === 'ready'))
+        .filter((issue: any) => !issue.completedAt && !issue.canceledAt && 
+          (issue.stateType === 'started' || issue.stateType === 'review' || 
+           issue.stateType === 'testing' || issue.stateType === 'ready' || 
+           issue.stateType === 'blocked'))
         .reduce((sum: number, issue: any) => sum + (issue.estimate || 0), 0);
       
       const totalActive = completedScope + inProgressScope;
@@ -164,7 +170,10 @@ export class MetricsCalculator {
         .filter((issue: any) => issue.completedAt)
         .reduce((sum: number, issue: any) => sum + (issue.estimate || 0), 0);
       const inProgressScope = cycle.issues
-        .filter((issue: any) => !issue.completedAt && !issue.canceledAt && (issue.stateType === 'started' || issue.stateType === 'review' || issue.stateType === 'testing' || issue.stateType === 'ready'))
+        .filter((issue: any) => !issue.completedAt && !issue.canceledAt && 
+          (issue.stateType === 'started' || issue.stateType === 'review' || 
+           issue.stateType === 'testing' || issue.stateType === 'ready' || 
+           issue.stateType === 'blocked'))
         .reduce((sum: number, issue: any) => sum + (issue.estimate || 0), 0);
       
       const todo = totalScope - completedScope - inProgressScope;
@@ -522,13 +531,17 @@ export class MetricsCalculator {
               const transitionTime = new Date(transition.createdAt).getTime();
               const timeInState = (transitionTime - lastTime) / (1000 * 60 * 60 * 24);
               
-              // Map the from state to our categories
-              if (lastState === 'started' || (transition.fromState?.type === 'started')) {
+              // Map the from state to our categories - R&D specific
+              const fromStateLower = transition.fromState?.name?.toLowerCase() || '';
+              const fromType = transition.fromState?.type || '';
+              
+              if (fromType === 'started' || fromStateLower.includes('progress') || 
+                  fromStateLower.includes('development') || fromStateLower.includes('coding')) {
                 stateMetrics.devTime.push(timeInState);
-              } else if (transition.fromState?.name?.toLowerCase().includes('review')) {
+              } else if (fromType === 'review' || fromStateLower.includes('review')) {
                 stateMetrics.reviewTime.push(timeInState);
-              } else if (transition.fromState?.name?.toLowerCase().includes('test') || 
-                        transition.fromState?.name?.toLowerCase().includes('qa')) {
+              } else if (fromType === 'testing' || fromStateLower.includes('test') || 
+                        fromStateLower.includes('qa')) {
                 stateMetrics.testTime.push(timeInState);
               }
               
@@ -545,6 +558,9 @@ export class MetricsCalculator {
                 stateMetrics.reviewTime.push(timeInCurrentState);
               } else if (issue.stateType === 'testing') {
                 stateMetrics.testTime.push(timeInCurrentState);
+              } else if (issue.stateType === 'blocked') {
+                // Track blocked items separately
+                // Don't count towards active development time
               }
             }
           }
@@ -564,6 +580,9 @@ export class MetricsCalculator {
           stateMetrics.reviewTime.push(daysInCurrentState);
         } else if (issue.stateType === 'testing') {
           stateMetrics.testTime.push(daysInCurrentState);
+        } else if (issue.stateType === 'ready') {
+          // Items ready for release but not yet deployed
+          // Count as part of the flow but not active development
         }
       }
     });
@@ -653,10 +672,15 @@ export class MetricsCalculator {
   }
 
   private calculateReviewMetrics(issues: any[]) {
-    // Find all items currently in review
-    const itemsInReview = issues.filter(issue => 
-      issue.stateType === 'review' && !issue.completedAt && !issue.canceledAt
-    );
+    // Find all items currently in review (R&D specific states)
+    const itemsInReview = issues.filter(issue => {
+      const isInReview = issue.stateType === 'review' || 
+        issue.stateName?.toLowerCase().includes('review') ||
+        issue.stateName?.toLowerCase().includes('pr ') ||
+        issue.stateName?.toLowerCase() === 'reviewing';
+      
+      return isInReview && !issue.completedAt && !issue.canceledAt;
+    });
     
     const now = Date.now();
     const reviewThreshold = 2; // Days threshold for "too long in review"
@@ -839,17 +863,29 @@ export class MetricsCalculator {
         l.label.toLowerCase().includes('blocker')
       );
       
+      // Check if the state itself is 'blocked' (R&D specific)
+      const isBlockedState = issue.stateType === 'blocked' || 
+        issue.stateName?.toLowerCase() === 'blocked' ||
+        issue.stateName?.toLowerCase() === 'on hold';
+      
       // Only consider issues that are not completed or canceled
-      return (isBlocked || hasBlockedLabel) && !issue.completedAt && !issue.canceledAt;
+      return (isBlocked || hasBlockedLabel || isBlockedState) && !issue.completedAt && !issue.canceledAt;
     });
 
     // Also find issues that have been in progress for too long (potential blockers)
     const stuckIssues = issues.filter(issue => {
-      const longInProgress = (issue.stateType === 'started' || issue.stateType === 'review' || issue.stateType === 'testing') && 
+      // R&D workflow: Check if stuck in development, review, or testing
+      const activeStates = ['started', 'review', 'testing', 'ready'];
+      const longInProgress = activeStates.includes(issue.stateType) && 
         issue.startedAt &&
-        (Date.now() - new Date(issue.startedAt).getTime()) > 5 * 24 * 60 * 60 * 1000; // 5 days instead of 3
+        (Date.now() - new Date(issue.startedAt).getTime()) > 5 * 24 * 60 * 60 * 1000; // 5 days
       
-      return longInProgress && !issue.completedAt && !issue.canceledAt;
+      // Don't include already identified blocked issues
+      const alreadyBlocked = blockingMap.has(issue.identifier) || 
+        issue.stateType === 'blocked' || 
+        issue.labels.some((l: any) => l.label.toLowerCase().includes('blocked'));
+      
+      return longInProgress && !issue.completedAt && !issue.canceledAt && !alreadyBlocked;
     });
 
     // Combine both sets, remove duplicates
