@@ -23,8 +23,20 @@ const logger = pino({
 });
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
+
+// Initialize Prisma with better error handling
+let prisma: PrismaClient;
+try {
+  prisma = new PrismaClient({
+    log: ['error', 'warn'],
+    errorFormat: 'pretty'
+  });
+} catch (error) {
+  logger.error({ error }, 'Failed to initialize Prisma Client');
+  logger.error('Make sure DATABASE_URL is set and valid');
+  process.exit(1);
+}
 
 if (!process.env.LINEAR_API_KEY) {
   logger.error('LINEAR_API_KEY is required in environment variables');
@@ -65,10 +77,67 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({ error: 'Internal server error' });
 });
 
+async function initDatabase() {
+  try {
+    logger.info('Initializing database schema...');
+    // Try to create tables if they don't exist
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Team" (
+        "id" TEXT PRIMARY KEY,
+        "key" TEXT UNIQUE NOT NULL,
+        "name" TEXT NOT NULL,
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP NOT NULL
+      )
+    `);
+    logger.info('Database schema initialized');
+    return true;
+  } catch (error: any) {
+    logger.warn('Could not initialize schema, assuming it exists');
+    return true; // Continue anyway
+  }
+}
+
+async function connectWithRetry(retries = 5, delay = 5000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      logger.info(`Attempting database connection (attempt ${i + 1}/${retries})...`);
+      await prisma.$connect();
+      logger.info('Successfully connected to database');
+      
+      // Try to initialize schema on first connect
+      if (i === 0) {
+        await initDatabase();
+      }
+      
+      return true;
+    } catch (error: any) {
+      logger.error({ 
+        attempt: i + 1, 
+        error: error.message,
+        code: error.code,
+        clientVersion: error.clientVersion
+      }, 'Database connection failed');
+      
+      if (i < retries - 1) {
+        logger.info(`Waiting ${delay/1000} seconds before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  return false;
+}
+
 async function start() {
   try {
-    await prisma.$connect();
-    logger.info('Connected to database');
+    // Try to connect with retries
+    const connected = await connectWithRetry();
+    
+    if (!connected) {
+      logger.error('Could not establish database connection after multiple attempts');
+      logger.error('Please check your DATABASE_URL environment variable');
+      process.exit(1);
+    }
 
     app.listen(PORT, () => {
       logger.info({ port: PORT }, `Server running at http://localhost:${PORT}`);
